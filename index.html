@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>東京自由行地鐵路線指南 | Tokyo Metro Guide</title>
+<meta name="description" content="2026東京自由行6天5夜完整地鐵路線指南，水道橋出發" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚇</text></svg>" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  ::-webkit-scrollbar { height: 0; width: 0; }
+  body { background: #f0f2f5; font-family: 'Noto Sans TC', 'Noto Sans JP', 'Helvetica Neue', sans-serif; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .gmaps-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; font-family: inherit;
+    color: #fff; background: #1a73e8; border: none; border-radius: 8px;
+    padding: 5px 10px; cursor: pointer; text-decoration: none;
+    transition: background .15s, transform .1s;
+    white-space: nowrap; margin-top: 4px;
+  }
+  .gmaps-btn:hover { background: #1557b0; }
+  .gmaps-btn:active { transform: scale(.96); }
+  .gmaps-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .gmaps-icon-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px; background: #1a73e8;
+    color: #fff; text-decoration: none; flex-shrink: 0;
+    transition: background .15s, transform .1s;
+  }
+  .gmaps-icon-btn:hover { background: #1557b0; }
+  .gmaps-icon-btn:active { transform: scale(.93); }
+  .gmaps-icon-btn svg { width: 16px; height: 16px; }
+  .subway-ticket-card { background: linear-gradient(135deg, #fdf4ff 0%, #faf5ff 100%); border: 1.5px solid #d8b4fe; }
+  .subway-savings { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(90deg, #7c3aed, #a855f7); padding: 2px 8px; border-radius: 10px; }
+</style>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+/* ── Google Maps Transit 導航連結 ── */
+function buildGMapsURL(fromStation, toStation) {
+  const clean = (s) => s.replace(/\s*[A-Z]\d+.*$/g, "").replace(/\s*[YSMNEGHTZCI]\d+/g, "").trim();
+  const from = clean(fromStation);
+  const to = clean(toStation);
+  const addEki = (s) => {
+    if (/駅|空港|機場|station|airport/i.test(s)) return s;
+    if (/成田/.test(s)) return s + "空港";
+    return s + "駅";
+  };
+  const origin = encodeURIComponent(addEki(from) + " 東京");
+  const dest = encodeURIComponent(addEki(to) + " 東京");
+  return "https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + dest + "&travelmode=transit";
+}
+
+function GMapsPin() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="#fff"/>
+    </svg>
+  );
+}
+
+var FOOD_SPOTS = [{"n":"Coffee Lodge Akaishi","u":"https://www.google.com/maps/place/Coffee+Lodge+Akaishi/data=!4m2!3m1!1s0x60188eea92fa9ed7:0x8bb3866b5fc6aeb0","a":"其他"},{"n":"Onigiri Asakusa Yadoroku","u":"https://www.google.com/maps/place/Onigiri+Asakusa+Yadoroku/data=!4m2!3m1!1s0x60188eea94e7bc2f:0x4c6337d2e1a8ace8","a":"淺草"},{"n":"伊良可樂 渋谷神宮前","u":"https://www.google.com/maps/place/%E4%BC%8A%E8%89%AF%E5%8F%AF%E6%A8%82+%E6%B8%8B%E8%B0%B7%E7%A5%9E%E5%AE%AE%E5%89%8D/data=!4m2!3m1!1s0x60188d64d50b2079:0xfa6025069f8f0345","a":"渋谷"},{"n":"IYOSHI COLA Asakusa Rokku","u":"https://www.google.com/maps/place/IYOSHI+COLA+Asakusa+Rokku/data=!4m2!3m1!1s0x60188f239b04d609:0x1af861288b6b1620","a":"淺草"},{"n":"緣炸雞YUKARI","u":"https://www.google.com/maps/place/%E7%B7%A3%E7%82%B8%E9%9B%9EYUKARI/data=!4m2!3m1!1s0x60188ebf765865ad:0xeb8d3157ee5ab4dc","a":"其他"},{"n":"地瓜羊羹 舟和 本店","u":"https://www.google.com/maps/place/%E5%9C%B0%E7%93%9C%E7%BE%8A%E7%BE%B9+%E8%88%9F%E5%92%8C+%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188ec6d3465a13:0x1f4532d8220f59f4","a":"淺草"},{"n":"喜久屋","u":"https://www.google.com/maps/place/%E5%96%9C%E4%B9%85%E5%B1%8B/data=!4m2!3m1!1s0x60188ec6d37f6099:0xbff8df1ae0aa670a","a":"淺草"},{"n":"米久本店","u":"https://www.google.com/maps/place/%E7%B1%B3%E4%B9%85%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188eeaadfd553b:0x3625458b60493b8c","a":"淺草"},{"n":"Age.3 ASAKUSA","u":"https://www.google.com/maps/place/Age.3+ASAKUSA/data=!4m2!3m1!1s0x60188f00015fa903:0x9e8b0f2c573fcbdc","a":"淺草"},{"n":"油炸三明治專賣店 Age.3","u":"https://www.google.com/maps/place/%E6%B2%B9%E7%82%B8%E4%B8%89%E6%98%8E%E6%B2%BB%E5%B0%88%E8%B3%A3%E5%BA%97+Age.3/data=!4m2!3m1!1s0x60188b9dffe9b1e7:0xf81b31918420debe","a":"其他"},{"n":"銅鑼燒 龜十","u":"https://www.google.com/maps/place/%E9%8A%85%E9%91%BC%E7%87%92+%E9%BE%9C%E5%8D%81/data=!4m2!3m1!1s0x60188ec6eecae46b:0x32ae89e994aad78a","a":"淺草"},{"n":"Gyutan Ara","u":"https://www.google.com/maps/place/Gyutan+Ara/data=!4m2!3m1!1s0x60188cd10fc11de7:0xe3a4be60c28ef0fa","a":"其他"},{"n":"Nadai Unatoto","u":"https://www.google.com/maps/place/Nadai+Unatoto/data=!4m2!3m1!1s0x60188e9e5d1c13e9:0x7b919ad73d3cb92c","a":"其他"},{"n":"Negishi Yaechika","u":"https://www.google.com/maps/place/Negishi+Yaechika/data=!4m2!3m1!1s0x60188bfd3a823395:0x68631ab0c8db4d3e","a":"東京駅・丸之內・日本橋"},{"n":"Negishi","u":"https://www.google.com/maps/place/Negishi/data=!4m2!3m1!1s0x60188c1e73982eaf:0xa706ff7c307192cf","a":"其他"},{"n":"Negishi","u":"https://www.google.com/maps/place/Negishi/data=!4m2!3m1!1s0x60188e9ef5dce7a3:0xbb224a58b2279c6b","a":"其他"},{"n":"Henry's Burger Harajuku","u":"https://www.google.com/maps/place/Henry's+Burger+Harajuku/data=!4m2!3m1!1s0x60188d000bb543a1:0x29693d696532c4a3","a":"原宿・表參道"},{"n":"Sukiyaki Matsukiya","u":"https://www.google.com/maps/place/Sukiyaki+Matsukiya/data=!4m2!3m1!1s0x60188b558a20cfb7:0xf517e09f474ffb30","a":"其他"},{"n":"Misojyu","u":"https://www.google.com/maps/place/Misojyu/data=!4m2!3m1!1s0x60188f4051b9cb51:0xcc23574ca23ffe0b","a":"其他"},{"n":"soba MAREN Shibuya","u":"https://www.google.com/maps/place/soba+MAREN+Shibuya/data=!4m2!3m1!1s0x60188d8720caf751:0xe9d74a52fcc92459","a":"渋谷"},{"n":"辻田 銀座","u":"https://www.google.com/maps/place/%E8%BE%BB%E7%94%B0+%E9%8A%80%E5%BA%A7/data=!4m2!3m1!1s0x60188b2f78d66cd5:0xa82eeefe70575b2a","a":"銀座・有楽町"},{"n":"LATTE ART MANIA TOKYO / ラテアートマニア東京店","u":"https://www.google.com/maps/place/LATTE+ART+MANIA+TOKYO+%2F+%E3%83%A9%E3%83%86%E3%82%A2%E3%83%BC%E3%83%88%E3%83%9E%E3%83%8B%E3%82%A2%E6%9D%B1%E4%BA%AC%E5%BA%97/data=!4m2!3m1!1s0x60188d01bc9cfe27:0xebc9e99761d22bf1","a":"其他"},{"n":"Yatai Rāmen Shunya Chan","u":"https://www.google.com/maps/place/Yatai+R%C4%81men+Shunya+Chan/data=!4m2!3m1!1s0x60191fca54185209:0x6b9969834dfd0e32","a":"其他"},{"n":"Mrs.hamburger","u":"https://www.google.com/maps/place/Mrs.hamburger/data=!4m2!3m1!1s0x6018da5e100eaa9b:0x90a916b8f909da19","a":"其他"},{"n":"林屋","u":"https://www.google.com/maps/place/%E6%9E%97%E5%B1%8B/data=!4m2!3m1!1s0x6018da60c1ddcb21:0x9161fb4a22353cc8","a":"其他"},{"n":"星巴克 川越時鐘小路店","u":"https://www.google.com/maps/place/%E6%98%9F%E5%B7%B4%E5%85%8B+%E5%B7%9D%E8%B6%8A%E6%99%82%E9%90%98%E5%B0%8F%E8%B7%AF%E5%BA%97/data=!4m2!3m1!1s0x6018da6112088e8d:0x8d3eca3f1054ab74","a":"川越"},{"n":"Koedo Osatsuan","u":"https://www.google.com/maps/place/Koedo+Osatsuan/data=!4m2!3m1!1s0x6018da6112c75593:0xa6b9efb70d127ace","a":"川越"},{"n":"番薯甜點 菓匠右門","u":"https://www.google.com/maps/place/%E7%95%AA%E8%96%AF%E7%94%9C%E9%BB%9E+%E8%8F%93%E5%8C%A0%E5%8F%B3%E9%96%80/data=!4m2!3m1!1s0x6018da616a9343f7:0xe7f0682fce6a1b12","a":"川越"},{"n":"Kameya Main Store","u":"https://www.google.com/maps/place/Kameya+Main+Store/data=!4m2!3m1!1s0x6018da60c566fbff:0x340a2cef0b5a2211","a":"其他"},{"n":"川越布丁","u":"https://www.google.com/maps/place/%E5%B7%9D%E8%B6%8A%E5%B8%83%E4%B8%81/data=!4m2!3m1!1s0x6018db2c7b787475:0xa09dfc9d2d3a6c68","a":"川越"},{"n":"一頭牛燒肉 房家","u":"https://www.google.com/maps/place/%E4%B8%80%E9%A0%AD%E7%89%9B%E7%87%92%E8%82%89+%E6%88%BF%E5%AE%B6/data=!4m2!3m1!1s0x60188e9f7ad01e89:0xd8f7a007634589e0","a":"其他"},{"n":"Menya Tsutaju Kishiya","u":"https://www.google.com/maps/place/Menya+Tsutaju+Kishiya/data=!4m2!3m1!1s0x60185e77b65c4e4f:0xd94b31b4afb96d0","a":"其他"},{"n":"chigauka","u":"https://www.google.com/maps/place/chigauka/data=!4m2!3m1!1s0x60188d1d13f41def:0xaeed0c1c3d8d388","a":"其他"},{"n":"喫茶You","u":"https://www.google.com/maps/place/%E5%96%AB%E8%8C%B6You/data=!4m2!3m1!1s0x60188be0bbe9246b:0x48ea261820b8e596","a":"其他"},{"n":"BONGENCOFFEE Ginza","u":"https://www.google.com/maps/place/BONGENCOFFEE+Ginza/data=!4m2!3m1!1s0x60188be05b6d603f:0x8116694f0e7eeeff","a":"銀座・有楽町"},{"n":"燒肉 鶯谷園","u":"https://www.google.com/maps/place/%E7%87%92%E8%82%89+%E9%B6%AF%E8%B0%B7%E5%9C%92/data=!4m2!3m1!1s0x60188e843febb589:0x572ecf899a1ca32","a":"其他"},{"n":"五代目 花山烏冬 銀座店","u":"https://www.google.com/maps/place/%E4%BA%94%E4%BB%A3%E7%9B%AE+%E8%8A%B1%E5%B1%B1%E7%83%8F%E5%86%AC+%E9%8A%80%E5%BA%A7%E5%BA%97/data=!4m2!3m1!1s0x60188be095730edd:0xc3804ee1afc7eb9e","a":"銀座・有楽町"},{"n":"American","u":"https://www.google.com/maps/place/American/data=!4m2!3m1!1s0x60188be0bf5096c7:0x411ff827818fb522","a":"其他"},{"n":"Depot","u":"https://www.google.com/maps/place/Depot/data=!4m2!3m1!1s0x60188d6c207ef9c5:0x68cb5aaf7b9912c1","a":"其他"},{"n":"Torisawa Roppongi","u":"https://www.google.com/maps/place/Torisawa+Roppongi/data=!4m2!3m1!1s0x60188ba84d7794d3:0x133f16ef66826f3","a":"六本木・麻布"},{"n":"御曹司Kiyoyasu邸","u":"https://www.google.com/maps/place/%E5%BE%A1%E6%9B%B9%E5%8F%B8Kiyoyasu%E9%82%B8/data=!4m2!3m1!1s0x60188b82b633f05d:0x83f8bafb5b43f3e7","a":"其他"},{"n":"Gyugyu","u":"https://www.google.com/maps/place/Gyugyu/data=!4m2!3m1!1s0x60188b79e30b13a1:0xca6fa79be633ef47","a":"其他"},{"n":"YAKINIKU Kintan Roppongi","u":"https://www.google.com/maps/place/YAKINIKU+Kintan+Roppongi/data=!4m2!3m1!1s0x60188b9d59b1f761:0x433cfa7acc9bebe7","a":"六本木・麻布"},{"n":"MEAT MAN Roppongi","u":"https://www.google.com/maps/place/MEAT+MAN+Roppongi/data=!4m2!3m1!1s0x60188b82b1236e75:0x6f43e8f01158a109","a":"六本木・麻布"},{"n":"權八 西麻布","u":"https://www.google.com/maps/place/%E6%AC%8A%E5%85%AB+%E8%A5%BF%E9%BA%BB%E5%B8%83/data=!4m2!3m1!1s0x60188b7a9a5e0913:0x1290299c462e0387","a":"六本木・麻布"},{"n":"Joumon 六本木店","u":"https://www.google.com/maps/place/Joumon+%E5%85%AD%E6%9C%AC%E6%9C%A8%E5%BA%97/data=!4m2!3m1!1s0x60188b9d75f634f1:0x5313f5e2ddc80208","a":"六本木・麻布"},{"n":"TsuruTonTan","u":"https://www.google.com/maps/place/TsuruTonTan/data=!4m2!3m1!1s0x60188b9b01869971:0x58c5b9221e6a7f14","a":"其他"},{"n":"阿夫利 六本木新城","u":"https://www.google.com/maps/place/%E9%98%BF%E5%A4%AB%E5%88%A9+%E5%85%AD%E6%9C%AC%E6%9C%A8%E6%96%B0%E5%9F%8E/data=!4m2!3m1!1s0x60188b778544593f:0xf06fb2f205734e86","a":"六本木・麻布"},{"n":"Iruca Tokyo Roppongi","u":"https://www.google.com/maps/place/Iruca+Tokyo+Roppongi/data=!4m2!3m1!1s0x60188b44a91c83f3:0x8b281245ba52a8f0","a":"六本木・麻布"},{"n":"肉屋橫丁","u":"https://www.google.com/maps/place/%E8%82%89%E5%B1%8B%E6%A9%AB%E4%B8%81/data=!4m2!3m1!1s0x60188d127825a285:0xd9d02d7676e15a99","a":"渋谷"},{"n":"REC COFFEE Suidobashi","u":"https://www.google.com/maps/place/REC+COFFEE+Suidobashi/data=!4m2!3m1!1s0x60188d7b4a057e77:0xf18ff8e23e7aac81","a":"飯田橋・神楽坂・水道橋"},{"n":"Tonkatsu Yamabe","u":"https://www.google.com/maps/place/Tonkatsu+Yamabe/data=!4m2!3m1!1s0x60188e9fc1e862f3:0x7467c163e2631f28","a":"其他"},{"n":"Yamashita Honki Udon - Shibuya Center Street","u":"https://www.google.com/maps/place/Yamashita+Honki+Udon+-+Shibuya+Center+Street/data=!4m2!3m1!1s0x60188ca8180cf5f5:0x944b9091c3311266","a":"渋谷"},{"n":"Gyu Tongue Lemon Shinjuku","u":"https://www.google.com/maps/place/Gyu+Tongue+Lemon+Shinjuku/data=!4m2!3m1!1s0x60188d29c40e3255:0x148f6cd600a5a08","a":"新宿"},{"n":"I'm donut? Harajuku","u":"https://www.google.com/maps/place/I'm+donut%3F+Harajuku/data=!4m2!3m1!1s0x60188d7915ff1545:0xe04fa5adbfdc479c","a":"原宿・表參道"},{"n":"The Little BAKERY Tokyo","u":"https://www.google.com/maps/place/The+Little+BAKERY+Tokyo/data=!4m2!3m1!1s0x60188ca5aaaaaaab:0x2eb0c1933251ad9","a":"其他"},{"n":"原宿-笑章魚燒","u":"https://www.google.com/maps/place/%E5%8E%9F%E5%AE%BF-%E7%AC%91%E7%AB%A0%E9%AD%9A%E7%87%92/data=!4m2!3m1!1s0x60188ca4019daaab:0xd5b6c86568d29205","a":"原宿・表參道"},{"n":"Nata de Cristiano","u":"https://www.google.com/maps/place/Nata+de+Cristiano/data=!4m2!3m1!1s0x60188cb2d4849701:0x6ef95e34fbd45b7e","a":"其他"},{"n":"Fuglen Tokyo","u":"https://www.google.com/maps/place/Fuglen+Tokyo/data=!4m2!3m1!1s0x60188cb2957a60ad:0xee351263d20144a7","a":"渋谷"},{"n":"烤肉激素新井屋 Hanare","u":"https://www.google.com/maps/place/%E7%83%A4%E8%82%89%E6%BF%80%E7%B4%A0%E6%96%B0%E4%BA%95%E5%B1%8B+Hanare/data=!4m2!3m1!1s0x60188db9bf489189:0x42078a74b1ebe61c","a":"其他"},{"n":"焼肉ホルモン 新井屋 渋谷","u":"https://www.google.com/maps/place/%E7%84%BC%E8%82%89%E3%83%9B%E3%83%AB%E3%83%A2%E3%83%B3+%E6%96%B0%E4%BA%95%E5%B1%8B+%E6%B8%8B%E8%B0%B7/data=!4m2!3m1!1s0x60188d3db8706bf7:0x9f74043b2affa561","a":"渋谷"},{"n":"Kenyan Shibuya","u":"https://www.google.com/maps/place/Kenyan+Shibuya/data=!4m2!3m1!1s0x60188ca8ca4ae3b3:0x11a910c14454ccbc","a":"渋谷"},{"n":"Yakitori Miyagawa Yotsuya","u":"https://www.google.com/maps/place/Yakitori+Miyagawa+Yotsuya/data=!4m2!3m1!1s0x60188c8a0069968b:0x5fc28140f3c84d0","a":"其他"},{"n":"Wagyu shabu-shabu Kagurazaka Fuga","u":"https://www.google.com/maps/place/Wagyu+shabu-shabu+Kagurazaka+Fuga/data=!4m2!3m1!1s0x60188c5a6da00f87:0x85e789a000616e53","a":"飯田橋・神楽坂・水道橋"},{"n":"Spontini Cascade Harajuku","u":"https://www.google.com/maps/place/Spontini+Cascade+Harajuku/data=!4m2!3m1!1s0x60188ca52a8130cf:0x6aec1483f3f4094c","a":"原宿・表參道"},{"n":"DOLCE TACUBO CAFFE","u":"https://www.google.com/maps/place/DOLCE+TACUBO+CAFFE/data=!4m2!3m1!1s0x60188ba640f0f6fd:0x29d193736980646","a":"其他"},{"n":"Hills House Sky Room Café&Bar","u":"https://www.google.com/maps/place/Hills+House+Sky+Room+Caf%C3%A9%26Bar/data=!4m2!3m1!1s0x60188bc2dc815817:0x3cf3420d35016166","a":"其他"},{"n":"GYUKATSU Kyoto Katsugyu Asakusa Orange Street","u":"https://www.google.com/maps/place/GYUKATSU+Kyoto+Katsugyu+Asakusa+Orange+Street/data=!4m2!3m1!1s0x60188fe7c650ca47:0x513ba5c11498ece6","a":"淺草"},{"n":"Watabe","u":"https://www.google.com/maps/place/Watabe/data=!4m2!3m1!1s0x60188c49e645e1f3:0x8a8ba0720a9317e7","a":"其他"},{"n":"Peter Luger 牛排館 東京","u":"https://www.google.com/maps/place/Peter+Luger+%E7%89%9B%E6%8E%92%E9%A4%A8+%E6%9D%B1%E4%BA%AC/data=!4m2!3m1!1s0x60188bd28536402d:0x45eca5f988b97909","a":"其他"},{"n":"Tas Yard","u":"https://www.google.com/maps/place/Tas+Yard/data=!4m2!3m1!1s0x60188cb9586e6db9:0x9093260be65cfcf6","a":"其他"},{"n":"梅丘壽司美登利 銀座店","u":"https://www.google.com/maps/place/%E6%A2%85%E4%B8%98%E5%A3%BD%E5%8F%B8%E7%BE%8E%E7%99%BB%E5%88%A9+%E9%8A%80%E5%BA%A7%E5%BA%97/data=!4m2!3m1!1s0x60188bef55e55555:0x78730b4bf7a32c62","a":"銀座・有楽町"},{"n":"無敵家拉麵","u":"https://www.google.com/maps/place/%E7%84%A1%E6%95%B5%E5%AE%B6%E6%8B%89%E9%BA%B5/data=!4m2!3m1!1s0x60188d682708f977:0x829333b0d73eb2cd","a":"池袋"},{"n":"Gyukatsu Motomura Ikebukuro","u":"https://www.google.com/maps/place/Gyukatsu+Motomura+Ikebukuro/data=!4m2!3m1!1s0x60188d682dbbb4f7:0xa96ea78d1ec02a40","a":"池袋"},{"n":"Negishi","u":"https://www.google.com/maps/place/Negishi/data=!4m2!3m1!1s0x60188d66292e3461:0xe8bbb0f476053fa1","a":"其他"},{"n":"RINGO 池袋店","u":"https://www.google.com/maps/place/RINGO+%E6%B1%A0%E8%A2%8B%E5%BA%97/data=!4m2!3m1!1s0x60188d67744ad6ef:0x6dfb7c339cb0660d","a":"池袋"},{"n":"Udon Shin","u":"https://www.google.com/maps/place/Udon+Shin/data=!4m2!3m1!1s0x60188cd1efa50001:0x4b21a07a78a71766","a":"其他"},{"n":"麵屋海神","u":"https://www.google.com/maps/place/%E9%BA%B5%E5%B1%8B%E6%B5%B7%E7%A5%9E/data=!4m2!3m1!1s0x60188cda8e64545d:0x9d9889d3100386fc","a":"新宿"},{"n":"Cafe Aaliya","u":"https://www.google.com/maps/place/Cafe+Aaliya/data=!4m2!3m1!1s0x60188cdb110f51e5:0x1a011438f4c23010","a":"新宿"},{"n":"麵屋翔 本店","u":"https://www.google.com/maps/place/%E9%BA%B5%E5%B1%8B%E7%BF%94+%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188d2985c50001:0x5ed8ed7c47023216","a":"新宿"},{"n":"拉麵林田 新宿本店","u":"https://www.google.com/maps/place/%E6%8B%89%E9%BA%B5%E6%9E%97%E7%94%B0+%E6%96%B0%E5%AE%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188cdaff5538f9:0xadc1d87ecb41f58f","a":"新宿"},{"n":"Oden to Sakana Ninoya Nishi-Shinjuku","u":"https://www.google.com/maps/place/Oden+to+Sakana+Ninoya+Nishi-Shinjuku/data=!4m2!3m1!1s0x60188d6dbe51cc03:0xcb469dd3dfcfe290","a":"新宿"},{"n":"Gurgaon","u":"https://www.google.com/maps/place/Gurgaon/data=!4m2!3m1!1s0x60188be47a69faaf:0xa48921561f926689","a":"其他"},{"n":"銀座木村家 洋食グリル(グリル木村家)","u":"https://www.google.com/maps/place/%E9%8A%80%E5%BA%A7%E6%9C%A8%E6%9D%91%E5%AE%B6+%E6%B4%8B%E9%A3%9F%E3%82%B0%E3%83%AA%E3%83%AB(%E3%82%B0%E3%83%AA%E3%83%AB%E6%9C%A8%E6%9D%91%E5%AE%B6)/data=!4m2!3m1!1s0x60188b8272f355e1:0xd99edef24dfe91d3","a":"銀座・有楽町"},{"n":"THE STAND","u":"https://www.google.com/maps/place/THE+STAND/data=!4m2!3m1!1s0x60188b98e1db551f:0xdff667872d520378","a":"其他"},{"n":"Café 1894","u":"https://www.google.com/maps/place/Caf%C3%A9+1894/data=!4m2!3m1!1s0x60188bfa652e1b8f:0xd5bdffa46ecf67b5","a":"東京駅・丸之內・日本橋"},{"n":"Brasserie Viron Marunouchi","u":"https://www.google.com/maps/place/Brasserie+Viron+Marunouchi/data=!4m2!3m1!1s0x60188bfaf8823531:0xb50d3700edc9e0ac","a":"東京駅・丸之內・日本橋"},{"n":"Lilyan","u":"https://www.google.com/maps/place/Lilyan/data=!4m2!3m1!1s0x60188b6f64c07b4b:0x61de9a6a97a7aafe","a":"其他"},{"n":"Yakitori Tsukada Shibuya","u":"https://www.google.com/maps/place/Yakitori+Tsukada+Shibuya/data=!4m2!3m1!1s0x60188bad5d502773:0x1c3e4cf173e20ff3","a":"渋谷"},{"n":"かつお食堂(柴魚片飯專門店)","u":"https://www.google.com/maps/place/%E3%81%8B%E3%81%A4%E3%81%8A%E9%A3%9F%E5%A0%82(%E6%9F%B4%E9%AD%9A%E7%89%87%E9%A3%AF%E5%B0%88%E9%96%80%E5%BA%97)/data=!4m2!3m1!1s0x60188b58b9a156e5:0xac430c2169731c76","a":"其他"},{"n":"Nara Seimen","u":"https://www.google.com/maps/place/Nara+Seimen/data=!4m2!3m1!1s0x60188dc98beb1cb7:0xdb97d86319424d30","a":"其他"},{"n":"神楽坂 今井屋本店","u":"https://www.google.com/maps/place/%E7%A5%9E%E6%A5%BD%E5%9D%82+%E4%BB%8A%E4%BA%95%E5%B1%8B%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188c5ad567f2ff:0x2e6a3bf07a26ca80","a":"飯田橋・神楽坂・水道橋"},{"n":"Oreryū Shio Ramen Kagurazakajō","u":"https://www.google.com/maps/place/Orery%C5%AB+Shio+Ramen+Kagurazakaj%C5%8D/data=!4m2!3m1!1s0x60188d7e4365c6a7:0x9fc96e01804bad6c","a":"飯田橋・神楽坂・水道橋"},{"n":"辻田 飯田橋","u":"https://www.google.com/maps/place/%E8%BE%BB%E7%94%B0+%E9%A3%AF%E7%94%B0%E6%A9%8B/data=!4m2!3m1!1s0x60188c440c473e19:0x49104bad9471976c","a":"飯田橋・神楽坂・水道橋"},{"n":"SAPANA","u":"https://www.google.com/maps/place/SAPANA/data=!4m2!3m1!1s0x60188c3fbb9dd937:0xba66c9bd16c276e7","a":"飯田橋・神楽坂・水道橋"}];
+var SHOP_SPOTS = [{"n":"烏森神社","u":"https://www.google.com/maps/place/%E7%83%8F%E6%A3%AE%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x60188bebcecb219b:0x8e103e6b027bdafd","a":"其他"},{"n":"日枝神社","u":"https://www.google.com/maps/place/%E6%97%A5%E6%9E%9D%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x601fa6c4e4114317:0xef431afda2747c8f","a":"其他"},{"n":"Yasukuni-jinja Shrine","u":"https://www.google.com/maps/place/Yasukuni-jinja+Shrine/data=!4m2!3m1!1s0x60188c680dae43d5:0xb5e754e6bf88ce90","a":"其他"},{"n":"Phiten-免稅","u":"https://www.google.com/maps/place/Phiten-%E5%85%8D%E7%A8%85/data=!4m2!3m1!1s0x60188ba6bce94805:0x755dbc48e9b48f33","a":"其他"},{"n":"玩具店 Yamashiroya","u":"https://www.google.com/maps/place/%E7%8E%A9%E5%85%B7%E5%BA%97+Yamashiroya/data=!4m2!3m1!1s0x60188e9e5f5ed73f:0x9710bfada7b2ccf1","a":"上野・秋葉原"},{"n":"KITH 東京店","u":"https://www.google.com/maps/place/KITH+%E6%9D%B1%E4%BA%AC%E5%BA%97/data=!4m2!3m1!1s0x60188db0e5e3ca4b:0xfd8db4ff8ea042d1","a":"其他"},{"n":"伊勢丹 新宿店","u":"https://www.google.com/maps/place/%E4%BC%8A%E5%8B%A2%E4%B8%B9+%E6%96%B0%E5%AE%BF%E5%BA%97/data=!4m2!3m1!1s0x60188cdba56b3bf7:0x8b741cc73341edb5","a":"新宿"},{"n":"被官稲荷神社","u":"https://www.google.com/maps/place/%E8%A2%AB%E5%AE%98%E7%A8%B2%E8%8D%B7%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x60188ec19aabffff:0xb9776f460f7dfbcb","a":"淺草"},{"n":"Sensō-ji Jizo","u":"https://www.google.com/maps/place/Sens%C5%8D-ji+Jizo/data=!4m2!3m1!1s0x60188ec034795555:0x23a46c153013edc7","a":"淺草"},{"n":"東京大神宮","u":"https://www.google.com/maps/place/%E6%9D%B1%E4%BA%AC%E5%A4%A7%E7%A5%9E%E5%AE%AE/data=!4m2!3m1!1s0x60188c43ddbaaaab:0x7223e2de290136ef","a":"飯田橋・神楽坂・水道橋"},{"n":"今戶神社","u":"https://www.google.com/maps/place/%E4%BB%8A%E6%88%B6%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x60188edd4de502a3:0x9c0f93a97544e047","a":"淺草"},{"n":"エイチ ビューティー＆ユース","u":"https://www.google.com/maps/place/%E3%82%A8%E3%82%A4%E3%83%81+%E3%83%93%E3%83%A5%E3%83%BC%E3%83%86%E3%82%A3%E3%83%BC%EF%BC%86%E3%83%A6%E3%83%BC%E3%82%B9/data=!4m2!3m1!1s0x60188b61c59b5be5:0x234395e0e6114b3","a":"其他"},{"n":"川越 熊野神社","u":"https://www.google.com/maps/place/%E5%B7%9D%E8%B6%8A+%E7%86%8A%E9%87%8E%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x6018da5e10c4a8bd:0xa69952866920a85a","a":"川越"},{"n":"大正浪漫夢通","u":"https://www.google.com/maps/place/%E5%A4%A7%E6%AD%A3%E6%B5%AA%E6%BC%AB%E5%A4%A2%E9%80%9A/data=!4m2!3m1!1s0x6018db0dfc1b1877:0x929f9b0b3fedbefd","a":"川越"},{"n":"Chiikawa Mogumogu Hompo Kawagoe","u":"https://www.google.com/maps/place/Chiikawa+Mogumogu+Hompo+Kawagoe/data=!4m2!3m1!1s0x6018db5ad3fee029:0x385f14ef6b654aee","a":"川越"},{"n":"菓子屋横丁","u":"https://www.google.com/maps/place/%E8%8F%93%E5%AD%90%E5%B1%8B%E6%A8%AA%E4%B8%81/data=!4m2!3m1!1s0x6018da640fe3ba7d:0x497dbd8ef274a0fa","a":"川越"},{"n":"Arai Buhei Shoten","u":"https://www.google.com/maps/place/Arai+Buhei+Shoten/data=!4m2!3m1!1s0x6018da614e37829f:0xfb66d37ff9336345","a":"其他"},{"n":"時之鐘","u":"https://www.google.com/maps/place/%E6%99%82%E4%B9%8B%E9%90%98/data=!4m2!3m1!1s0x6018da6141acb0ad:0xb93b6f615532ff61","a":"川越"},{"n":"川越冰川神社","u":"https://www.google.com/maps/place/%E5%B7%9D%E8%B6%8A%E5%86%B0%E5%B7%9D%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x6018da89ead23633:0x7fce7ee6a490f05c","a":"川越"},{"n":"小江戶川越一番街商店街 藏造老屋街道","u":"https://www.google.com/maps/place/%E5%B0%8F%E6%B1%9F%E6%88%B6%E5%B7%9D%E8%B6%8A%E4%B8%80%E7%95%AA%E8%A1%97%E5%95%86%E5%BA%97%E8%A1%97+%E8%97%8F%E9%80%A0%E8%80%81%E5%B1%8B%E8%A1%97%E9%81%93/data=!4m2!3m1!1s0x6018da618c4167fb:0x27f2920eda13c433","a":"川越"},{"n":"LE LABO Shibuya Parco","u":"https://www.google.com/maps/place/LE+LABO+Shibuya+Parco/data=!4m2!3m1!1s0x60188d00c811a58f:0x73033be9355b8ef1","a":"渋谷"},{"n":"LE LABO","u":"https://www.google.com/maps/place/LE+LABO/data=!4m2!3m1!1s0x60188dbe871ee38b:0x3d6d0ea760f9cb61","a":"其他"},{"n":"LE LABO ル ラボ 六本⽊","u":"https://www.google.com/maps/place/LE+LABO+%E3%83%AB+%E3%83%A9%E3%83%9C+%E5%85%AD%E6%9C%AC%E2%BD%8A/data=!4m2!3m1!1s0x60188bcd7d9538ef:0x3249165af7877c43","a":"六本木・麻布"},{"n":"富士吉田懷舊商店街","u":"https://www.google.com/maps/place/%E5%AF%8C%E5%A3%AB%E5%90%89%E7%94%B0%E6%87%B7%E8%88%8A%E5%95%86%E5%BA%97%E8%A1%97/data=!4m2!3m1!1s0x601967e35a18de11:0x5d98d17793f9d405","a":"富士山・河口湖"},{"n":"河口湖 富士山纜車","u":"https://www.google.com/maps/place/%E6%B2%B3%E5%8F%A3%E6%B9%96+%E5%AF%8C%E5%A3%AB%E5%B1%B1%E7%BA%9C%E8%BB%8A/data=!4m2!3m1!1s0x60195e268ba95555:0x4fa724d1d92f7142","a":"富士山・河口湖"},{"n":"新倉富士淺間神社","u":"https://www.google.com/maps/place/%E6%96%B0%E5%80%89%E5%AF%8C%E5%A3%AB%E6%B7%BA%E9%96%93%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x6019674cda070c6b:0xdc6154ac26eed07d","a":"富士山・河口湖"},{"n":"妙本寺","u":"https://www.google.com/maps/place/%E5%A6%99%E6%9C%AC%E5%AF%BA/data=!4m2!3m1!1s0x601845c4df115c45:0x78ceccbb62539684","a":"鎌倉"},{"n":"鶴岡八幡宮","u":"https://www.google.com/maps/place/%E9%B6%B4%E5%B2%A1%E5%85%AB%E5%B9%A1%E5%AE%AE/data=!4m2!3m1!1s0x601845b87890aa89:0xa867ad10105036b5","a":"鎌倉"},{"n":"鎌倉大佛殿高德院","u":"https://www.google.com/maps/place/%E9%8E%8C%E5%80%89%E5%A4%A7%E4%BD%9B%E6%AE%BF%E9%AB%98%E5%BE%B7%E9%99%A2/data=!4m2!3m1!1s0x601845f2df49bc05:0x1ec393b02d6bef4c","a":"鎌倉"},{"n":"Ginza Loft","u":"https://www.google.com/maps/place/Ginza+Loft/data=!4m2!3m1!1s0x60188be45c99d2a9:0x323ea1310dee9c4c","a":"銀座・有楽町"},{"n":"博品館 TOY PARK 銀座本店","u":"https://www.google.com/maps/place/%E5%8D%9A%E5%93%81%E9%A4%A8+TOY+PARK+%E9%8A%80%E5%BA%A7%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188be85edf8add:0xd82b961d1ed58e05","a":"銀座・有楽町"},{"n":"資生堂Parlour+餐廳 銀座本店","u":"https://www.google.com/maps/place/%E8%B3%87%E7%94%9F%E5%A0%82Parlour%2B%E9%A4%90%E5%BB%B3+%E9%8A%80%E5%BA%A7%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188be88bb850a1:0x136bb3c52c5462f6","a":"銀座・有楽町"},{"n":"Ginza Shusse Jizōson","u":"https://www.google.com/maps/place/Ginza+Shusse+Jiz%C5%8Dson/data=!4m2!3m1!1s0x60188be691bd803b:0xb4d988cabed4fbe4","a":"銀座・有楽町"},{"n":"銀座三越","u":"https://www.google.com/maps/place/%E9%8A%80%E5%BA%A7%E4%B8%89%E8%B6%8A/data=!4m2!3m1!1s0x60188be68e21d35f:0x91fb4ae4762f83be","a":"銀座・有楽町"},{"n":"Ginza Wako","u":"https://www.google.com/maps/place/Ginza+Wako/data=!4m2!3m1!1s0x60188be67f079b9d:0x65bf40986312de69","a":"銀座・有楽町"},{"n":"北海道ワイン㈱ 東京営業所","u":"https://www.google.com/maps/place/%E5%8C%97%E6%B5%B7%E9%81%93%E3%83%AF%E3%82%A4%E3%83%B3%E3%88%B1+%E6%9D%B1%E4%BA%AC%E5%96%B6%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x60188bbc5a543c05:0xa989763007ba14f6","a":"其他"},{"n":"Base Yard Tokyo","u":"https://www.google.com/maps/place/Base+Yard+Tokyo/data=!4m2!3m1!1s0x60188d7d2188c009:0x2671a8f941428e1a","a":"其他"},{"n":"小網神社","u":"https://www.google.com/maps/place/%E5%B0%8F%E7%B6%B2%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x60188950f64b8f99:0xc0cb3994d27227df","a":"東京駅・丸之內・日本橋"},{"n":"Kabukicho Main Gate","u":"https://www.google.com/maps/place/Kabukicho+Main+Gate/data=!4m2!3m1!1s0x60188dd891d50357:0xc5d1324c16fdaa4","a":"新宿"},{"n":"Laforet原宿","u":"https://www.google.com/maps/place/Laforet%E5%8E%9F%E5%AE%BF/data=!4m2!3m1!1s0x60188ca48de018ad:0x7f96d764aa0f19cf","a":"原宿・表參道"},{"n":"東急Plaza表參道原宿","u":"https://www.google.com/maps/place/%E6%9D%B1%E6%80%A5Plaza%E8%A1%A8%E5%8F%83%E9%81%93%E5%8E%9F%E5%AE%BF/data=!4m2!3m1!1s0x60188ca47d9d408f:0xcad336117f4b7838","a":"原宿・表參道"},{"n":"道玄坂通","u":"https://www.google.com/maps/place/%E9%81%93%E7%8E%84%E5%9D%82%E9%80%9A/data=!4m2!3m1!1s0x60188b5a08f9b3df:0xa3bf771937e9c3a4","a":"渋谷"},{"n":"DULTON Jinnan Shop","u":"https://www.google.com/maps/place/DULTON+Jinnan+Shop/data=!4m2!3m1!1s0x60188caf4f03c967:0x14768daa049060d3","a":"渋谷"},{"n":"FREAK'S STORE Shibuya","u":"https://www.google.com/maps/place/FREAK'S+STORE+Shibuya/data=!4m2!3m1!1s0x60188ca895c73753:0xb4a267f60a5cbca4","a":"渋谷"},{"n":"SHIBU HACHI BOX","u":"https://www.google.com/maps/place/SHIBU+HACHI+BOX/data=!4m2!3m1!1s0x60188b57f1c8fd5b:0xb8ad13bbdfefbccd","a":"渋谷"},{"n":"神田神社","u":"https://www.google.com/maps/place/%E7%A5%9E%E7%94%B0%E7%A5%9E%E7%A4%BE/data=!4m2!3m1!1s0x60188c1ecc161bed:0xf397e4b6bf417c8b","a":"上野・秋葉原"},{"n":"BASIC AND ACCENT 虎ノ門ヒルズステーションタワー店","u":"https://www.google.com/maps/place/BASIC+AND+ACCENT+%E8%99%8E%E3%83%8E%E9%96%80%E3%83%92%E3%83%AB%E3%82%BA%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E3%82%BF%E3%83%AF%E3%83%BC%E5%BA%97/data=!4m2!3m1!1s0x60188b66968abb57:0x7ec7dc5c476a7e86","a":"六本木・麻布"},{"n":"Dashi Okume Azabudai Hills","u":"https://www.google.com/maps/place/Dashi+Okume+Azabudai+Hills/data=!4m2!3m1!1s0x60188b33bf2683a5:0xd546a05fc32dd349","a":"六本木・麻布"},{"n":"Sumidaya","u":"https://www.google.com/maps/place/Sumidaya/data=!4m2!3m1!1s0x60188bd8ba24c97b:0xcc762b1e63183d88","a":"其他"},{"n":"橙通商店街","u":"https://www.google.com/maps/place/%E6%A9%99%E9%80%9A%E5%95%86%E5%BA%97%E8%A1%97/data=!4m2!3m1!1s0x60188ec0c65128c7:0x98448babfc157e5f","a":"其他"},{"n":"渋谷スクランブル交差点","u":"https://www.google.com/maps/place/%E6%B8%8B%E8%B0%B7%E3%82%B9%E3%82%AF%E3%83%A9%E3%83%B3%E3%83%96%E3%83%AB%E4%BA%A4%E5%B7%AE%E7%82%B9/data=!4m2!3m1!1s0x60188bcaeb0cd12b:0x20e563a2e0aec969","a":"渋谷"},{"n":"東京證券交易所","u":"https://www.google.com/maps/place/%E6%9D%B1%E4%BA%AC%E8%AD%89%E5%88%B8%E4%BA%A4%E6%98%93%E6%89%80/data=!4m2!3m1!1s0x60188950b74e159d:0x69918894d9333893","a":"東京駅・丸之內・日本橋"},{"n":"明治神宮","u":"https://www.google.com/maps/place/%E6%98%8E%E6%B2%BB%E7%A5%9E%E5%AE%AE/data=!4m2!3m1!1s0x60188cb79a4c26e5:0x8fca893849103f73","a":"原宿・表參道"},{"n":"teamLab Planets TOKYO DMM","u":"https://www.google.com/maps/place/teamLab+Planets+TOKYO+DMM/data=!4m2!3m1!1s0x60188908e728e749:0x6de450c94bd3d622","a":"豊洲"},{"n":"澀谷 SKY","u":"https://www.google.com/maps/place/%E6%BE%80%E8%B0%B7+SKY/data=!4m2!3m1!1s0x60188b6825f61ae1:0x6ff47ee61e522473","a":"渋谷"},{"n":"金王八幡宮","u":"https://www.google.com/maps/place/%E9%87%91%E7%8E%8B%E5%85%AB%E5%B9%A1%E5%AE%AE/data=!4m2!3m1!1s0x60188b595366b6d5:0x5a15107c0ff67cef","a":"渋谷"},{"n":"澀谷PARCO","u":"https://www.google.com/maps/place/%E6%BE%80%E8%B0%B7PARCO/data=!4m2!3m1!1s0x60188ca8e2fe2173:0x1adbb1909538391b","a":"渋谷"},{"n":"Shibuya 109","u":"https://www.google.com/maps/place/Shibuya+109/data=!4m2!3m1!1s0x60188ca9cd6c1c87:0x55a2a75ba417e072","a":"渋谷"},{"n":"宮下公園","u":"https://www.google.com/maps/place/%E5%AE%AE%E4%B8%8B%E5%85%AC%E5%9C%92/data=!4m2!3m1!1s0x60188de622941551:0x5400fedc2467d9be","a":"渋谷"},{"n":"Grandscape Ikebukuro","u":"https://www.google.com/maps/place/Grandscape+Ikebukuro/data=!4m2!3m1!1s0x60188d3e4955e85f:0x3cc9c4e4aba3fd7e","a":"池袋"},{"n":"太陽城","u":"https://www.google.com/maps/place/%E5%A4%AA%E9%99%BD%E5%9F%8E/data=!4m2!3m1!1s0x60188d6f134fd653:0x51eb1d42c77222c2","a":"池袋"},{"n":"池袋東口陽光六十條通","u":"https://www.google.com/maps/place/%E6%B1%A0%E8%A2%8B%E6%9D%B1%E5%8F%A3%E9%99%BD%E5%85%89%E5%85%AD%E5%8D%81%E6%A2%9D%E9%80%9A/data=!4m2!3m1!1s0x60188d67d6d9b645:0x413b27c40920deee","a":"池袋"},{"n":"Gashapon Ikebukuro Main Store","u":"https://www.google.com/maps/place/Gashapon+Ikebukuro+Main+Store/data=!4m2!3m1!1s0x60188d9382917e01:0xd2209080955d15e6","a":"池袋"},{"n":"GiGO Main Branch","u":"https://www.google.com/maps/place/GiGO+Main+Branch/data=!4m2!3m1!1s0x60188dd409141a51:0x9e506af3ccd25c48","a":"池袋"},{"n":"animate 池袋總店","u":"https://www.google.com/maps/place/animate+%E6%B1%A0%E8%A2%8B%E7%B8%BD%E5%BA%97/data=!4m2!3m1!1s0x60188d6f4361458b:0x503df2e68ddac61a","a":"池袋"},{"n":"池袋PARCO 本館","u":"https://www.google.com/maps/place/%E6%B1%A0%E8%A2%8BPARCO+%E6%9C%AC%E9%A4%A8/data=!4m2!3m1!1s0x60188d679dc29965:0xf4aada01b7fce76f","a":"池袋"},{"n":"Bic Camera 池袋本店","u":"https://www.google.com/maps/place/Bic+Camera+%E6%B1%A0%E8%A2%8B%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188d670d1a305f:0x70a1288e7cf0f33f","a":"池袋"},{"n":"Chiikawa Land","u":"https://www.google.com/maps/place/Chiikawa+Land/data=!4m2!3m1!1s0x60188d00255807c7:0xb55fa44e475bbafb","a":"池袋"},{"n":"BIC CAMERA 新宿西口 (2F～6F)","u":"https://www.google.com/maps/place/BIC+CAMERA+%E6%96%B0%E5%AE%BF%E8%A5%BF%E5%8F%A3+(2F%EF%BD%9E6F)/data=!4m2!3m1!1s0x60188cd6e4e65be9:0xb1c64b306a3cbe1d","a":"新宿"},{"n":"Uniqlo Ginza Flagship Store","u":"https://www.google.com/maps/place/Uniqlo+Ginza+Flagship+Store/data=!4m2!3m1!1s0x60188be66e07d36f:0x45e536859ebe18d3","a":"銀座・有楽町"},{"n":"銀座 伊東屋 本店","u":"https://www.google.com/maps/place/%E9%8A%80%E5%BA%A7+%E4%BC%8A%E6%9D%B1%E5%B1%8B+%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x60188be4000a0029:0x8a7da075396968c0","a":"銀座・有楽町"},{"n":"無印良品 銀座旗艦店","u":"https://www.google.com/maps/place/%E7%84%A1%E5%8D%B0%E8%89%AF%E5%93%81+%E9%8A%80%E5%BA%A7%E6%97%97%E8%89%A6%E5%BA%97/data=!4m2!3m1!1s0x60188baa38aecf7d:0xab5a3452172b5f9","a":"銀座・有楽町"},{"n":"銀座中央通","u":"https://www.google.com/maps/place/%E9%8A%80%E5%BA%A7%E4%B8%AD%E5%A4%AE%E9%80%9A/data=!4m2!3m1!1s0x60188be427810d45:0x33fa9c2b59658e06","a":"銀座・有楽町"},{"n":"DOVER STREET MARKET 銀座","u":"https://www.google.com/maps/place/DOVER+STREET+MARKET+%E9%8A%80%E5%BA%A7/data=!4m2!3m1!1s0x60188be61af12a0b:0x1511045c266c6525","a":"銀座・有楽町"},{"n":"Hankyu Men’s Tokyo","u":"https://www.google.com/maps/place/Hankyu+Men%E2%80%99s+Tokyo/data=!4m2!3m1!1s0x60188be562c880b5:0x79e943ae780264d4","a":"其他"},{"n":"GINZA SIX","u":"https://www.google.com/maps/place/GINZA+SIX/data=!4m2!3m1!1s0x60188bef472c0001:0xcfcb0363f18109fc","a":"銀座・有楽町"},{"n":"and wander GINZA SIX","u":"https://www.google.com/maps/place/and+wander+GINZA+SIX/data=!4m2!3m1!1s0x60188b0013aef11f:0xafe1d3f03af38715","a":"銀座・有楽町"},{"n":"KITTE丸之內","u":"https://www.google.com/maps/place/KITTE%E4%B8%B8%E4%B9%8B%E5%85%A7/data=!4m2!3m1!1s0x60188bfa4ae94675:0x9f64e11ee9dc660a","a":"東京駅・丸之內・日本橋"}];
+var AREA_ORDER = ["渋谷", "新宿", "原宿・表參道", "六本木・麻布", "銀座・有楽町", "池袋", "上野・秋葉原", "淺草", "川越", "飯田橋・神楽坂・水道橋", "東京駅・丸之內・日本橋", "豊洲", "富士山・河口湖", "鎌倉", "其他"];
+var AREA_ICONS = {"渋谷": "🏙️", "新宿": "🌃", "原宿・表參道": "👗", "六本木・麻布": "🌙", "銀座・有楽町": "💎", "池袋": "🎮", "上野・秋葉原": "🎌", "淺草": "🏮", "川越": "🏯", "飯田橋・神楽坂・水道橋": "🏨", "東京駅・丸之內・日本橋": "🚉", "豊洲": "🎨", "富士山・河口湖": "🗻", "鎌倉": "⛩️", "其他": "📍"};
+var AREA_DAYS = {"渋谷": "Day5", "新宿": "Day5", "原宿・表參道": "Day5", "六本木・麻布": "Day5", "銀座・有楽町": "Day2", "池袋": "Day3", "上野・秋葉原": "Day2", "淺草": "自由安排", "川越": "Day3", "飯田橋・神楽坂・水道橋": "飯店周邊", "東京駅・丸之內・日本橋": "Day4", "豊洲": "Day2", "富士山・河口湖": "Day4", "鎌倉": "自由安排", "其他": "待分配"};
+
+
+const DAYS = [
+  {
+    day: 1, date: "04/14（二）", title: "抵達東京", icon: "✈️", color: "#6366f1",
+    summary: "成田機場 → 水道橋飯店",
+    routes: [
+      {
+        label: "方案A 京成スカイライナー（推薦）", badge: "最快 54分", cost: "¥2,730",
+        steps: [
+          { from: "成田空港", to: "京成上野", line: "京成スカイライナー", lineColor: "#1e40af", time: "41分", note: "⚠️ 到站後步行5分至JR上野站" },
+          { from: "JR上野", to: "秋葉原", line: "JR山手線（外回り・東京方向）", lineColor: "#80c241", time: "4分", note: "Suica ✓・2站" },
+          { from: "秋葉原", to: "水道橋", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "4分", note: "Suica ✓・2站直達飯店" },
+        ],
+      },
+      {
+        label: "方案B N'EX成田特快", badge: "68分", cost: "¥3,460",
+        steps: [
+          { from: "成田空港", to: "東京", line: "N'EX 成田特快", lineColor: "#dc2626", time: "60分" },
+          { from: "東京", to: "御茶ノ水", line: "JR中央線快速", lineColor: "#f97316", time: "4分", note: "Suica ✓" },
+          { from: "御茶ノ水", to: "水道橋", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "2分", note: "Suica ✓・1站直達飯店" },
+        ],
+      },
+    ],
+    tips: [
+      "⚠️ 晚班機（21:00後）注意末班車：スカイライナー末班約22:30，N'EX末班約21:44",
+      "💡 スカイライナー可在Klook或官網提前購買電子票",
+    ],
+  },
+  {
+    day: 2, date: "04/15（三）", title: "teamLab・銀座・日本橋・秋葉原", icon: "🎨", color: "#ec4899",
+    summary: "teamLab→銀座→東京證券→小網神社→秋葉原",
+    dinner: { name: "肉屋橫丁 秋葉原店", location: "外神田1-18-19 BiTO AKIBA 3F（秋葉原駅電氣街口步行1分）", price: "¥3,540/人",
+              gmap: "https://www.google.com/maps/dir/?api=1&destination=肉屋横丁+秋葉原+BiTO+AKIBA&travelmode=transit" },
+    routes: [
+      {
+        label: "全日路線（建議順序：由南往北不走回頭路）", badge: "8段路線", cost: "全程Suica/ICOCA可用",
+        steps: [
+          { from: "水道橋 I11", to: "日比谷 I08", line: "都営三田線（目黒方向）", lineColor: "#0079c2", time: "6分", note: "Suica ✓・3站，出站後步行5分至有楽町站" },
+          { from: "有楽町 Y18", to: "豊洲 Y22", line: "有楽町線（新木場方向）", lineColor: "#c1a470", time: "7分", note: "Suica ✓・4站，豊洲2b出口→步行10分到teamLab" },
+          { from: "豊洲 Y22", to: "銀座一丁目 Y19", line: "有楽町線（和光市方向）", lineColor: "#c1a470", time: "6分", note: "Suica ✓・步行3分到銀座中心逛街" },
+          { from: "銀座 H09", to: "茅場町 H13", line: "日比谷線（北千住方向）", lineColor: "#9caeb7", time: "8分", note: "Suica ✓・4站，出站步行3分到東京證券交易所" },
+          { from: "茅場町", to: "小網神社", line: "步行", lineColor: "#64748b", time: "5分", note: "從東京證券交易所步行5分即到，參拜後步行回茅場町站" },
+          { from: "茅場町 H13", to: "秋葉原 H16", line: "日比谷線（北千住方向）", lineColor: "#9caeb7", time: "5分", note: "Suica ✓・3站，逛完吃晚餐！" },
+          { from: "秋葉原 H16", to: "上野 H18", line: "日比谷線（北千住方向）", lineColor: "#9caeb7", time: "4分", note: "Suica ✓・2站（可跳過，留在秋葉原逛也行）" },
+          { from: "秋葉原", to: "水道橋", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "6分", note: "Suica ✓・晚餐後JR 2站直達飯店！" },
+        ],
+      },
+      {
+        subway: true,
+        label: "Tokyo Subway 24小時券 省錢攻略",
+        badge: "一日券 ¥800", cost: "IC卡搭要 ~¥1,200",
+        savings: "~¥250",
+        info: "✅ 大部分路線都是 Metro＋都營線，用一日券划算。最後一段秋葉原→水道橋走JR需另刷IC卡（¥150）。購買地點：成田/羽田機場、各地鐵站售票機。",
+        steps: [
+          { from: "水道橋 I11", to: "日比谷 I08", line: "都営三田線（目黒方向）", lineColor: "#7c3aed", time: "6分", note: "🎫 一日券 ✓ 都營線" },
+          { from: "有楽町 Y18", to: "豊洲 Y22", line: "有楽町線（新木場方向）", lineColor: "#7c3aed", time: "7分", note: "🎫 一日券 ✓ Metro" },
+          { from: "豊洲 Y22", to: "銀座一丁目 Y19", line: "有楽町線（和光市方向）", lineColor: "#7c3aed", time: "6分", note: "🎫 一日券 ✓ Metro" },
+          { from: "銀座 H09", to: "茅場町 H13", line: "日比谷線（北千住方向）", lineColor: "#7c3aed", time: "8分", note: "🎫 一日券 ✓ Metro・出站參觀東京證券＋小網神社" },
+          { from: "茅場町 H13", to: "秋葉原 H16", line: "日比谷線（北千住方向）", lineColor: "#7c3aed", time: "5分", note: "🎫 一日券 ✓ Metro" },
+          { from: "秋葉原 H16", to: "上野 H18", line: "日比谷線（北千住方向）", lineColor: "#7c3aed", time: "4分", note: "🎫 一日券 ✓ Metro（可跳過）" },
+          { from: "秋葉原", to: "水道橋", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "6分", note: "⚠️ JR不含在一日券內，需刷IC卡 ¥150" },
+        ],
+      },
+    ],
+    tips: [
+      "🎫 teamLab Planets 門票 ¥3,800，務必提前官網預約時段",
+      "💡 建議早上先去teamLab（人少），下午逛銀座→日本橋→秋葉原",
+      "🏛️ 東京證券交易所＋小網神社都在茅場町站附近，步行可達",
+      "🍖 肉屋橫丁秋葉原店：JR電氣街口步行1分・建議提前預約",
+      "🔄 上野可跳過：如果逛累了直接在秋葉原吃完→JR 2站回飯店",
+    ],
+  },
+  {
+    day: 3, date: "04/16（四）", title: "川越＆池袋", icon: "🏯", color: "#f59e0b",
+    summary: "小江戶一日遊＋池袋逛街",
+    dinner: { name: "無敵家拉麵", location: "池袋東口步行3分（南池袋1-17-1）", price: "約¥1,000",
+              gmap: "https://www.google.com/maps/dir/?api=1&destination=無敵家ラーメン+池袋+東京&travelmode=transit" },
+    routes: [
+      {
+        label: "全日路線", badge: "6段路線", cost: "約¥1,340",
+        steps: [
+          { from: "水道橋", to: "飯田橋 Y13", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "2分", note: "Suica ✓・1站，轉有楽町線" },
+          { from: "飯田橋 Y13", to: "池袋 Y09", line: "有楽町線（和光市方向）", lineColor: "#c1a470", time: "10分", note: "Suica ✓・直達" },
+          { from: "池袋", to: "川越", line: "東武東上線（急行）", lineColor: "#e44d2e", time: "30分", note: "IC卡可用・¥490・搭急行才快！各停要50分" },
+          { from: "川越", to: "池袋", line: "東武東上線（急行）", lineColor: "#e44d2e", time: "30分", note: "IC卡可用・¥490" },
+          { from: "池袋 Y09", to: "飯田橋 Y13", line: "有楽町線（新木場方向）", lineColor: "#c1a470", time: "10分", note: "Suica ✓・直達" },
+          { from: "飯田橋", to: "水道橋", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "2分", note: "Suica ✓・1站回飯店" },
+        ],
+      },
+    ],
+    tips: [
+      "⚠️ 東武東上線不在地鐵券範圍內，需用IC卡另外付費",
+      "🏯 川越建議停留3-4小時：冰川神社、時の鐘、菓子屋横丁、藏造老街",
+      "🍜 無敵家建議16:00前或21:00後去，避開排隊尖峰",
+      "📍 池袋東武東上線入口在站的西側，跟著指標走",
+    ],
+  },
+  {
+    day: 4, date: "04/17（五）", title: "富士山一日遊", icon: "🗻", color: "#0ea5e9",
+    summary: "7:30 東京駅丸之內北口集合",
+    routes: [
+      {
+        label: "去程：水道橋→東京駅（建議6:50出門）", badge: "8分鐘", cost: "¥180",
+        steps: [
+          { from: "水道橋 I11", to: "大手町 I09", line: "都営三田線（目黒方向）", lineColor: "#0079c2", time: "4分", note: "Suica ✓・2站直達" },
+          { from: "大手町 M18", to: "東京 M17", line: "丸ノ内線（荻窪方向）", lineColor: "#f62e36", time: "2分", note: "Suica ✓・站內轉乘→步行3分到丸之內北口" },
+        ],
+      },
+      {
+        label: "回程：東京駅→水道橋", badge: "8分鐘", cost: "¥180",
+        steps: [
+          { from: "東京 M17", to: "大手町 M18", line: "丸ノ内線（池袋方向）", lineColor: "#f62e36", time: "2分", note: "Suica ✓" },
+          { from: "大手町 I09", to: "水道橋 I11", line: "都営三田線（西高島平方向）", lineColor: "#0079c2", time: "4分", note: "Suica ✓・2站直達飯店" },
+        ],
+      },
+    ],
+    tips: [
+      "📍 集合地：東京丸之內北口2號/6（東京站西側・皇居那一面）",
+      "🍖 晚餐牛舌：推薦東京站地下街「東京駅一番街」，選擇多",
+      "⏰ 大手町轉乘：三田線→丸ノ内線步行約2分鐘，跟著指標走",
+    ],
+  },
+  {
+    day: 5, date: "04/18（六）", title: "新宿・明治神宮・澀谷・六本木", icon: "⛩️", color: "#10b981",
+    summary: "購物＋神社＋夜景 精華路線",
+    dinner: { name: "權八 Gonpachi 西麻布", location: "港区西麻布1-13-11（六本木站步行10分）", price: "約¥3,000-5,000",
+              gmap: "https://www.google.com/maps/dir/?api=1&destination=権八+西麻布+東京&travelmode=transit" },
+    routes: [
+      {
+        label: "建議順序（由北往南不走回頭路）", badge: "7段路線", cost: "約¥650",
+        steps: [
+          { from: "水道橋", to: "新宿", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "20分", note: "Suica ✓・直達！全程不換車" },
+          { from: "新宿", to: "原宿", line: "JR山手線（外回り）", lineColor: "#80c241", time: "3分", note: "Suica ✓・1站→明治神宮南參道口步行3分" },
+          { from: "原宿", to: "渋谷", line: "JR山手線 或 步行", lineColor: "#80c241", time: "3分/15分", note: "Suica ✓・步行可逛表參道＋竹下通" },
+          { from: "渋谷", to: "恵比寿", line: "JR山手線（外回り）", lineColor: "#80c241", time: "3分", note: "Suica ✓・1站" },
+          { from: "恵比寿 H02", to: "六本木 H04", line: "日比谷線（北千住方向）", lineColor: "#9caeb7", time: "5分", note: "Suica ✓・2站→步行10分到權八" },
+          { from: "六本木 E23", to: "春日 E07", line: "都営大江戸線（都庁前方向）", lineColor: "#b6007a", time: "17分", note: "Suica ✓・往都庁前/新宿方向" },
+          { from: "春日 I12", to: "水道橋 I11", line: "都営三田線（目黒方向）", lineColor: "#0079c2", time: "2分", note: "Suica ✓・1站直達飯店！" },
+        ],
+      },
+      {
+        subway: true,
+        label: "Tokyo Subway 24小時券 全地鐵路線",
+        badge: "一日券 ¥800", cost: "IC卡搭要 ~¥1,580",
+        savings: "~¥780",
+        info: "💡 將 JR 段改為全 Metro＋都營路線！透過副都心線串接新宿→原宿→渋谷，再用半蔵門線＋大江戸線前往六本木，全程一日券搞定。",
+        steps: [
+          { from: "水道橋 I11", to: "春日 I12", line: "都営三田線（西高島平方向）", lineColor: "#7c3aed", time: "2分", note: "🎫 一日券 ✓ 都營線・1站" },
+          { from: "春日 E07", to: "新宿西口 E01", line: "都営大江戸線（都庁前方向）", lineColor: "#7c3aed", time: "12分", note: "🎫 一日券 ✓ 都營線・6站直達" },
+          { from: "新宿三丁目 F13", to: "明治神宮前 F15", line: "副都心線（渋谷方向）", lineColor: "#7c3aed", time: "4分", note: "🎫 一日券 ✓ Metro・新宿西口步行5分到新宿三丁目" },
+          { from: "明治神宮前 F15", to: "渋谷 F16", line: "副都心線（渋谷方向）", lineColor: "#7c3aed", time: "2分", note: "🎫 一日券 ✓ Metro・或步行15分逛表參道＋竹下通" },
+          { from: "渋谷 Z01", to: "青山一丁目 Z03", line: "半蔵門線（押上方向）", lineColor: "#7c3aed", time: "4分", note: "🎫 一日券 ✓ Metro・2站" },
+          { from: "青山一丁目 E24", to: "六本木 E23", line: "都営大江戸線", lineColor: "#7c3aed", time: "2分", note: "🎫 一日券 ✓ 都營線・1站→步行10分到權八" },
+          { from: "六本木 E23", to: "春日 E07", line: "都営大江戸線（都庁前方向）", lineColor: "#7c3aed", time: "20分", note: "🎫 一日券 ✓ 都營線・經由都庁前方向" },
+          { from: "春日 I12", to: "水道橋 I11", line: "都営三田線（目黒方向）", lineColor: "#7c3aed", time: "2分", note: "🎫 一日券 ✓ 都營線・1站直達飯店！" },
+        ],
+      },
+    ],
+    tips: [
+      "🛍️ Phiten免稅店：新宿或渋谷都有分店",
+      "⛩️ 明治神宮：免費參拜，建議停留40-60分鐘",
+      "🍢 權八是《追殺比爾》電影場景！建議提前預約",
+      "✨ 六本木→春日（大江戸線）→水道橋（三田線1站）直達回飯店",
+    ],
+  },
+  {
+    day: 6, date: "04/19（日）", title: "回成田機場", icon: "🛫", color: "#8b5cf6",
+    summary: "13:35航班 → 建議8:00-8:30出門",
+    routes: [
+      {
+        label: "方案A スカイライナー（推薦）", badge: "最快 57分", cost: "¥2,690",
+        steps: [
+          { from: "水道橋", to: "秋葉原", line: "JR中央・総武線（各停）", lineColor: "#ffd400", time: "4分", note: "Suica ✓・2站" },
+          { from: "秋葉原", to: "京成上野", line: "JR山手線（外回り・池袋方向）→步行5分", lineColor: "#80c241", time: "4分+5分", note: "Suica ✓・JR上野下車後步行5分至京成上野站" },
+          { from: "京成上野", to: "成田空港", line: "京成スカイライナー", lineColor: "#1e40af", time: "41分", note: "建議搭8:40或9:00班次（需另購票）" },
+        ],
+      },
+      {
+        label: "方案B Access Express（最省）", badge: "90分", cost: "¥1,330",
+        steps: [
+          { from: "水道橋 I11", to: "大手町 I09", line: "都営三田線（目黒方向）", lineColor: "#0079c2", time: "4分", note: "Suica ✓・2站" },
+          { from: "大手町 T09", to: "日本橋 T10", line: "東西線（西船橋方向）", lineColor: "#00a7db", time: "2分", note: "Suica ✓・1站轉乘浅草線" },
+          { from: "日本橋 A13", to: "成田空港", line: "都営浅草線直通京成アクセス特急", lineColor: "#e85298", time: "80分", note: "班次較少，不對號入座（需另購票）" },
+        ],
+      },
+    ],
+    tips: [
+      "⏰ 成田機場國際線報到在起飛前2-3小時開始",
+      "🧳 スカイライナー有大型行李架，行李多推薦此方案",
+      "🏘️ 早起有空可逛神楽坂（水道橋→飯田橋JR1站，法式小巷風情）",
+    ],
+  },
+];
+
+const QUICK_REF = [
+  { dest: "豊洲（teamLab）", route: "三田線→日比谷→步行→有楽町線", time: "18分" },
+  { dest: "銀座", route: "三田線→日比谷→步行→有楽町線→銀座一丁目", time: "22分" },
+  { dest: "秋葉原", route: "JR中央・総武線直達", time: "4分" },
+  { dest: "上野", route: "JR→秋葉原→山手線", time: "10分" },
+  { dest: "池袋", route: "JR→飯田橋→有楽町線", time: "14分" },
+  { dest: "東京駅", route: "三田線→大手町→丸ノ内線", time: "8分" },
+  { dest: "新宿", route: "JR中央・総武線直達（各停）", time: "20分" },
+  { dest: "渋谷", route: "三田線→神保町→半蔵門線", time: "18分" },
+  { dest: "六本木", route: "JR→飯田橋→大江戸線", time: "17分" },
+  { dest: "成田空港", route: "JR→秋葉原→上野→スカイライナー", time: "57分" },
+];
+
+function RouteStep({ step, isLast }) {
+  var mapsUrl = buildGMapsURL(step.from, step.to);
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "stretch", minHeight: 60 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 28, flexShrink: 0 }}>
+        <div style={{
+          width: 14, height: 14, borderRadius: "50%", backgroundColor: step.lineColor,
+          border: "2.5px solid #fff", boxShadow: "0 0 0 1.5px " + step.lineColor + "40", flexShrink: 0, marginTop: 4
+        }} />
+        {!isLast && (
+          <div style={{
+            flex: 1, width: 3, borderRadius: 2,
+            background: "linear-gradient(to bottom, " + step.lineColor + ", " + step.lineColor + "30)",
+            marginTop: 2, marginBottom: 2, minHeight: 20
+          }} />
+        )}
+      </div>
+      <div style={{ flex: 1, paddingBottom: isLast ? 0 : 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#1a1a2e" }}>{step.from}</span>
+          <span style={{ color: "#64748b", fontSize: 12 }}>→</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#1a1a2e" }}>{step.to}</span>
+          <span style={{
+            fontSize: 11, fontWeight: 600, color: step.lineColor,
+            background: step.lineColor + "15", padding: "1px 7px", borderRadius: 10
+          }}>{step.time}</span>
+        </div>
+        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{step.line}</div>
+        {step.note && (
+          <div style={{
+            fontSize: 11.5, color: "#3b82f6", marginTop: 3,
+            background: "#eff6ff", padding: "3px 8px", borderRadius: 6,
+            borderLeft: "2.5px solid #3b82f6", display: "inline-block"
+          }}>
+            {step.note}
+          </div>
+        )}
+        <div style={{ marginTop: 5 }}>
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="gmaps-btn">
+            <GMapsPin />
+            Google Maps 導航
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RouteCard({ route, initOpen }) {
+  const [open, setOpen] = useState(initOpen !== undefined ? initOpen : true);
+  const isSub = route.subway;
+  return (
+    <div className={isSub ? "subway-ticket-card" : ""} style={{
+      background: isSub ? undefined : "#fff", borderRadius: 14, marginBottom: 10,
+      border: isSub ? undefined : "1px solid #e2e8f0", overflow: "hidden",
+      boxShadow: "0 1px 4px rgba(0,0,0,.06)"
+    }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 16px", cursor: "pointer", border: "none", background: "transparent",
+        textAlign: "left", gap: 8, fontFamily: "inherit"
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 13.5, color: isSub ? "#6d28d9" : "#1a1a2e" }}>
+            {isSub && "🎫 "}{route.label}
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: "#fff",
+              background: isSub ? "linear-gradient(90deg,#7c3aed,#a855f7)" : "#3b82f6",
+              padding: "1px 8px", borderRadius: 10
+            }}>{route.badge}</span>
+            <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{route.cost}</span>
+            {route.savings && <span className="subway-savings">💰 省 {route.savings}</span>}
+          </div>
+        </div>
+        <span style={{
+          fontSize: 18, color: "#64748b", transition: "transform .2s",
+          transform: open ? "rotate(180deg)" : "rotate(0)"
+        }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ padding: "0 16px 14px 16px" }}>
+          {route.info && (
+            <div style={{ fontSize: 12, color: "#6d28d9", background: "#ede9fe", borderRadius: 8, padding: "8px 10px", marginBottom: 10, lineHeight: 1.6 }}>
+              {route.info}
+            </div>
+          )}
+          {route.steps.map((s, i) => (
+            <RouteStep key={i} step={s} isLast={i === route.steps.length - 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DayPanel({ data }) {
+  return (
+    <div style={{ animation: "fadeSlide .35s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+        <span style={{ fontSize: 28 }}>{data.icon}</span>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a2e", letterSpacing: -0.3 }}>{data.title}</div>
+          <div style={{ fontSize: 12.5, color: "#64748b", fontWeight: 500 }}>{data.summary}</div>
+        </div>
+      </div>
+      {data.dinner && (
+        <div style={{
+          background: "#fef3c7", borderRadius: 12, padding: "10px 14px",
+          marginBottom: 12, border: "1px solid #fde68a"
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, color: "#92400e", fontWeight: 600, marginBottom: 2 }}>🍽️ 晚餐</div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a2e" }}>{data.dinner.name}</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 1 }}>{data.dinner.location}</div>
+              <div style={{ fontSize: 12, color: "#b45309", fontWeight: 600, marginTop: 1 }}>{data.dinner.price}</div>
+            </div>
+            {data.dinner.gmap && (
+              <a href={data.dinner.gmap} target="_blank" rel="noopener noreferrer"
+                 className="gmaps-btn" style={{ background: "#d97706", marginTop: 16, flexShrink: 0 }}>
+                <GMapsPin />
+                餐廳導航
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+      {data.routes.map((r, i) => <RouteCard key={i} route={r} initOpen={r.subway ? false : true} />)}
+      {data.tips.length > 0 && (
+        <div style={{
+          marginTop: 12, background: "#f0fdf4", borderRadius: 12,
+          padding: "12px 14px", border: "1px solid #bbf7d0"
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>📌 提醒</div>
+          {data.tips.map((t, i) => (
+            <div key={i} style={{ fontSize: 12.5, color: "#64748b", lineHeight: 1.6, marginBottom: 3 }}>{t}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickRef() {
+  return (
+    <div style={{ animation: "fadeSlide .35s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <span style={{ fontSize: 28 }}>🗺️</span>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a2e", letterSpacing: -0.3 }}>從飯田橋出發速查</div>
+          <div style={{ fontSize: 12.5, color: "#64748b" }}>各站最快路線・點藍色按鈕開啟導航</div>
+        </div>
+      </div>
+      <div style={{
+        background: "#fff", borderRadius: 14, overflow: "hidden",
+        border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,.06)"
+      }}>
+        {QUICK_REF.map((r, i) => {
+          var url = buildGMapsURL("飯田橋", r.dest);
+          return (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", padding: "10px 14px",
+              borderBottom: i < QUICK_REF.length - 1 ? "1px solid #e2e8f0" : "none", gap: 8
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: "#1a1a2e" }}>{r.dest}</div>
+                <div style={{ fontSize: 11.5, color: "#64748b" }}>{r.route}</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{
+                  fontSize: 12, fontWeight: 700, color: "#3b82f6",
+                  background: "#eff6ff", padding: "2px 10px", borderRadius: 10, whiteSpace: "nowrap"
+                }}>{r.time}</div>
+                <a href={url} target="_blank" rel="noopener noreferrer" className="gmaps-icon-btn"
+                   title={"飯田橋 → " + r.dest}>
+                  <GMapsPin />
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{
+        marginTop: 16, background: "#f0fdf4", borderRadius: 12,
+        padding: "12px 14px", border: "1px solid #bbf7d0"
+      }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>💡 實用小提醒</div>
+        {[
+          "IC卡餘額隨時可在售票機加值，建議保持¥2,000以上",
+          "推薦下載「乗換案内」或 Google Maps 即時查班次",
+          "末班車約 00:00-00:30，注意晚餐後回程時間",
+          "飯田橋站A5出口最近飯店",
+          "各大站都有投幣式置物櫃（¥400-700）",
+        ].map((t, i) => (
+          <div key={i} style={{ fontSize: 12.5, color: "#64748b", lineHeight: 1.6, marginBottom: 3 }}>• {t}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+function SpotList({ spots, title, icon }) {
+  const [search, setSearch] = useState("");
+  const grouped = {};
+  AREA_ORDER.forEach(a => { grouped[a] = []; });
+  spots.forEach(s => {
+    if (!grouped[s.a]) grouped[s.a] = [];
+    grouped[s.a].push(s);
+  });
+  const filtered = search.trim() ? spots.filter(s => s.n.toLowerCase().includes(search.toLowerCase())) : null;
+
+  return (
+    <div style={{ animation: "fadeSlide .35s ease" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <span style={{ fontSize: 28 }}>{icon}</span>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 18, color: "#1a1a2e", letterSpacing: -0.3 }}>{title}</div>
+          <div style={{ fontSize: 12.5, color: "#64748b" }}>共 {spots.length} 個收藏・點擊導航</div>
+        </div>
+      </div>
+      <input value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="🔍 搜尋店名..."
+        style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, fontFamily: "inherit", marginBottom: 12, background: "#fff", outline: "none" }}
+      />
+      {filtered ? (
+        <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          {filtered.length === 0 && <div style={{ padding: 16, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>找不到相關結果</div>}
+          {filtered.map((s, i) => (
+            <SpotItem key={i} spot={s} border={i < filtered.length - 1} />
+          ))}
+        </div>
+      ) : (
+        AREA_ORDER.map(area => {
+          const items = grouped[area];
+          if (!items || items.length === 0) return null;
+          return <AreaSection key={area} area={area} items={items} />;
+        })
+      )}
+    </div>
+  );
+}
+
+function AreaSection({ area, items }) {
+  const [open, setOpen] = useState(false);
+  const dayTag = AREA_DAYS[area] || "";
+  return (
+    <div style={{ marginBottom: 8, borderRadius: 14, overflow: "hidden", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,.04)" }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "11px 14px", cursor: "pointer", border: "none", fontFamily: "inherit",
+        background: open ? "#f8fafc" : "#fff", textAlign: "left", gap: 8
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }}>{AREA_ICONS[area] || "📍"}</span>
+          <span style={{ fontWeight: 700, fontSize: 13.5, color: "#1a1a2e" }}>{area}</span>
+          <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>({items.length})</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {dayTag && <span style={{ fontSize: 10, fontWeight: 600, background: "#eff6ff", color: "#3b82f6", padding: "1px 6px", borderRadius: 6 }}>{dayTag}</span>}
+          <span style={{ fontSize: 16, color: "#94a3b8", transition: "transform .2s", transform: open ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
+        </div>
+      </button>
+      {open && (
+        <div style={{ borderTop: "1px solid #f1f5f9" }}>
+          {items.map((s, i) => <SpotItem key={i} spot={s} border={i < items.length - 1} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SpotItem({ spot, border }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", padding: "9px 14px", borderBottom: border ? "1px solid #f1f5f9" : "none", gap: 8, background: "#fff" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 600, fontSize: 13, color: "#1a1a2e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{spot.n}</div>
+      </div>
+      {spot.u && (
+        <a href={spot.u} target="_blank" rel="noopener noreferrer" className="gmaps-icon-btn"
+           style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0 }}>
+          <GMapsPin />
+        </a>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [activeDay, setActiveDay] = useState(2);
+  const [showRef, setShowRef] = useState(false);
+
+  var tabs = [
+    ...DAYS.map(function(d) { return { key: d.day, label: "D" + d.day, sub: d.date.slice(5, 10), color: d.color, icon: d.icon }; }),
+    { key: "ref", label: "速查", sub: "路線", color: "#6b7280", icon: "🗺️" },
+    { key: "food", label: "美食", sub: "95店", color: "#ef4444", icon: "🍜" },
+    { key: "shop", label: "逛街", sub: "78店", color: "#f59e0b", icon: "🛍️" },
+  ];
+
+  return (
+    <div style={{
+      fontFamily: "'Noto Sans TC', 'Noto Sans JP', 'Helvetica Neue', sans-serif",
+      background: "#f0f2f5", minHeight: "100vh", maxWidth: 520, margin: "0 auto",
+    }}>
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+        padding: "24px 20px 18px", color: "#fff"
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, opacity: .6, marginBottom: 4 }}>TOKYO METRO GUIDE</div>
+        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>🚇 東京自由行地鐵路線</div>
+        <div style={{ fontSize: 12.5, opacity: .7, marginTop: 4 }}>
+          📍 飯田橋 艾德蒙大都會大飯店 ｜ 04/14-04/19
+        </div>
+        <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["有楽町線 Y13", "東西線 T06", "南北線 N10", "大江戸線 E06", "JR中央・総武線"].map(function(l, i) {
+            return (
+              <span key={i} style={{
+                fontSize: 10, padding: "2px 8px", borderRadius: 10,
+                background: "rgba(255,255,255,.15)", color: "rgba(255,255,255,.85)", fontWeight: 500
+              }}>{l}</span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tab Bar */}
+      <div style={{
+        display: "flex", overflowX: "auto", gap: 0,
+        background: "#fff", borderBottom: "1px solid #e2e8f0",
+        position: "sticky", top: 0, zIndex: 10,
+        boxShadow: "0 2px 8px rgba(0,0,0,.04)"
+      }}>
+        {tabs.map(function(t) {
+          var isActive = (t.key === "ref" || t.key === "food" || t.key === "shop") ? showRef === t.key : (!showRef && activeDay === t.key);
+          return (
+            <button
+              key={t.key}
+              onClick={function() {
+                if (t.key === "ref" || t.key === "food" || t.key === "shop") { setShowRef(t.key); }
+                else { setShowRef(false); setActiveDay(t.key); }
+              }}
+              style={{
+                flex: "1 0 auto", minWidth: 52, padding: "10px 6px 8px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+                border: "none", cursor: "pointer", fontFamily: "inherit",
+                background: isActive ? t.color + "10" : "transparent",
+                borderBottom: isActive ? "2.5px solid " + t.color : "2.5px solid transparent",
+                transition: "all .15s"
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{t.icon}</span>
+              <span style={{
+                fontSize: 11, fontWeight: isActive ? 800 : 600,
+                color: isActive ? t.color : "#64748b"
+              }}>{t.label}</span>
+              <span style={{ fontSize: 9, color: "#64748b", opacity: .7 }}>{t.sub}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: "16px 16px 40px" }}>
+        {showRef === "ref" ? <QuickRef /> : showRef === "food" ? <SpotList spots={FOOD_SPOTS} title="東京美食收藏" icon="🍜" /> : showRef === "shop" ? <SpotList spots={SHOP_SPOTS} title="東京逛街收藏" icon="🛍️" /> : <DayPanel data={DAYS.find(function(d) { return d.day === activeDay; })} />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
