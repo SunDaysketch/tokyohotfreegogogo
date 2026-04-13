@@ -42,7 +42,70 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState } = React;
+const { useState, useEffect } = React;
+
+/* ── Open-Meteo 天氣 API（未來行程用 forecast）── */
+const WEATHER_URL =
+  "https://api.open-meteo.com/v1/forecast" +
+  "?latitude=35.6762&longitude=139.6503" +
+  "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode" +
+  "&timezone=Asia%2FTokyo" +
+  "&start_date=2026-04-14&end_date=2026-04-19";
+
+function wmoToEmoji(code) {
+  if (code === 0)  return { icon: "☀️", zh: "晴天" };
+  if (code <= 3)   return { icon: "⛅", zh: "多雲" };
+  if (code <= 49)  return { icon: "🌫️", zh: "霧/薄霧" };
+  if (code <= 67)  return { icon: "🌧️", zh: "降雨" };
+  if (code <= 77)  return { icon: "❄️", zh: "降雪" };
+  if (code <= 82)  return { icon: "🌦️", zh: "陣雨" };
+  if (code <= 99)  return { icon: "⛈️", zh: "雷陣雨" };
+  return { icon: "🌡️", zh: "未知" };
+}
+
+function getClothing(maxC, minC, precip) {
+  let base = maxC >= 28 ? "輕薄短袖"
+           : maxC >= 22 ? "短袖＋薄外套"
+           : maxC >= 16 ? "長袖＋薄外套"
+           : maxC >= 10 ? "毛衣＋厚外套"
+           : "羽絨衣＋圍巾";
+  const tips = [base];
+  if (maxC - minC >= 8) tips.push("日夜溫差大，建議洋蔥穿搭");
+  if (precip >= 1) tips.push("預計降雨 " + precip.toFixed(1) + "mm，帶摺疊傘");
+  return tips.join("，");
+}
+
+function WeatherCard({ weather }) {
+  if (!weather) return (
+    <div style={{
+      background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 12,
+      padding: "10px 14px", marginBottom: 12, fontSize: 12,
+      color: "#94a3b8", textAlign: "center"
+    }}>
+      ☁️ 天氣資料載入中...
+    </div>
+  );
+  var { icon, max, min, precip, wmoZh, clothing } = weather;
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+      border: "1.5px solid #bfdbfe", borderRadius: 12,
+      padding: "10px 14px", marginBottom: 12
+    }}>
+      <div style={{ fontWeight: 700, fontSize: 13, color: "#1d4ed8", marginBottom: 6 }}>
+        {icon} 今日天氣
+        <span style={{ fontSize: 11, fontWeight: 500, color: "#3b82f6", marginLeft: 8 }}>{wmoZh}</span>
+      </div>
+      <div style={{ display: "flex", gap: 16, fontSize: 13, color: "#1e40af", flexWrap: "wrap" }}>
+        <span>🌡️ <b>{max}°C</b> / {min}°C</span>
+        <span>🌂 降雨 {precip}mm</span>
+      </div>
+      <div style={{ marginTop: 6, fontSize: 12, color: "#1e40af", fontWeight: 500 }}>
+        👕 穿搭建議：{clothing}
+      </div>
+    </div>
+  );
+}
 
 /* ── Google Maps Transit 導航連結 ── */
 function buildGMapsURL(fromStation, toStation) {
@@ -363,7 +426,7 @@ function RouteCard({ route, initOpen }) {
   );
 }
 
-function DayPanel({ data }) {
+function DayPanel({ data, weatherData }) {
   return (
     <div style={{ animation: "fadeSlide .35s ease" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -396,6 +459,7 @@ function DayPanel({ data }) {
         </div>
       )}
       {data.routes.map((r, i) => <RouteCard key={i} route={r} initOpen={r.subway ? false : true} />)}
+      <WeatherCard weather={weatherData} />
       {data.tips.length > 0 && (
         <div style={{
           marginTop: 12, background: "#f0fdf4", borderRadius: 12,
@@ -559,6 +623,28 @@ function SpotItem({ spot, border }) {
 function App() {
   const [activeDay, setActiveDay] = useState(2);
   const [showRef, setShowRef] = useState(false);
+  const [weather, setWeather] = useState({});
+
+  useEffect(function() {
+    fetch(WEATHER_URL)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var map = {};
+        (d.daily.time || []).forEach(function(date, i) {
+          var wmo  = wmoToEmoji(d.daily.weathercode[i]);
+          var maxC = Math.round(d.daily.temperature_2m_max[i]);
+          var minC = Math.round(d.daily.temperature_2m_min[i]);
+          var precip = +((d.daily.precipitation_sum[i] || 0).toFixed(1));
+          map[date] = {
+            icon: wmo.icon, wmoZh: wmo.zh,
+            max: maxC, min: minC, precip: precip,
+            clothing: getClothing(maxC, minC, precip)
+          };
+        });
+        setWeather(map);
+      })
+      .catch(function(e) { console.warn("Weather fetch failed", e); });
+  }, []);
 
   var tabs = [
     ...DAYS.map(function(d) { return { key: d.day, label: "D" + d.day, sub: d.date.slice(5, 10), color: d.color, icon: d.icon }; }),
@@ -632,7 +718,7 @@ function App() {
 
       {/* Content */}
       <div style={{ padding: "16px 16px 40px" }}>
-        {showRef === "ref" ? <QuickRef /> : showRef === "food" ? <SpotList spots={FOOD_SPOTS} title="東京美食收藏" icon="🍜" /> : showRef === "shop" ? <SpotList spots={SHOP_SPOTS} title="東京逛街收藏" icon="🛍️" /> : <DayPanel data={DAYS.find(function(d) { return d.day === activeDay; })} />}
+        {showRef === "ref" ? <QuickRef /> : showRef === "food" ? <SpotList spots={FOOD_SPOTS} title="東京美食收藏" icon="🍜" /> : showRef === "shop" ? <SpotList spots={SHOP_SPOTS} title="東京逛街收藏" icon="🛍️" /> : <DayPanel data={DAYS.find(function(d) { return d.day === activeDay; })} weatherData={weather["2026-04-" + String(activeDay + 13).padStart(2,"0")]} />}
       </div>
     </div>
   );
